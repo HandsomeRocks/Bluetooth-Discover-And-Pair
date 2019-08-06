@@ -20,6 +20,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
@@ -187,6 +188,10 @@ public class MainActivity extends AppCompatActivity {
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
 
+            BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+            if(device != null) {
+                pairDevice(device);
+            }
             /*
             // Create the result Intent and include the MAC address
             Intent intent = new Intent();
@@ -198,6 +203,34 @@ public class MainActivity extends AppCompatActivity {
             */
         }
     };
+
+    /*
+    // this method requires knowledge of a correct pin or pairing with unlocked device
+    private void pairDevice(BluetoothDevice device) {
+        try {
+            Log.d("pairDevice()", "Start Pairing...");
+            Method m = device.getClass().getMethod("createBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+            Log.d("pairDevice()", "Pairing finished.");
+        } catch (Exception e) {
+            Log.e("pairDevice()", e.getMessage());
+        }
+    }
+    */
+
+    // this method opens a pin input dialog - pin must matchs= on both devices
+    public void pairDevice(BluetoothDevice device)
+    {
+        String ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST";
+        Intent intent = new Intent(ACTION_PAIRING_REQUEST);
+        String EXTRA_DEVICE = "android.bluetooth.device.extra.DEVICE";
+        intent.putExtra(EXTRA_DEVICE, device);
+        String EXTRA_PAIRING_VARIANT = "android.bluetooth.device.extra.PAIRING_VARIANT";
+        int PAIRING_VARIANT_PIN = 0;
+        intent.putExtra(EXTRA_PAIRING_VARIANT, PAIRING_VARIANT_PIN);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getApplicationContext().startActivity(intent);
+    }
 
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
